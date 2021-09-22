@@ -26,7 +26,7 @@ RUN cd ~/git && \
     source ~/git/emsdk/emsdk_env.sh && \
     emconfigure ./Configure no-legacy linux-generic64 && \
     sed -i 's|^CROSS_COMPILE.*$|CROSS_COMPILE=|g' Makefile && \
-    emmake make -j`nproc` build_generated libssl.a libcrypto.a
+    emmake make -j`nproc` build_generated libcrypto.a
 
 # Build LLVM
 RUN cd ~/git && \
@@ -67,8 +67,8 @@ RUN cd ~/git && \
         -DLLVM_TOOLS_BINARY_DIR=~/git/llvm-project/llvm/build/wasm/lib/cmake/llvm \
         -DCLANG_EXECUTABLE=~/git/emsdk/upstream/emscripten/emcc \
         -DLLVM_LINK_EXECUTABLE=~/git/llvm-project/llvm/build/native/bin/llvm-link \
+        -DGANDIVA_OPENSSL_LIBS="OpenSSL::Crypto" \
         -DOPENSSL_INCLUDE_DIR=~/git/openssl/include \
-        -DOPENSSL_SSL_LIBRARY=~/git/openssl/libssl.a \
         -DOPENSSL_CRYPTO_LIBRARY=~/git/openssl/libcrypto.a \
         -DARROW_JEMALLOC=OFF \
         -DARROW_CPU_FLAG= \
