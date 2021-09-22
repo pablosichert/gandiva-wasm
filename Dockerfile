@@ -38,7 +38,7 @@ RUN cd ~/git && \
     mkdir native && \
     cd native && \
     cmake ../.. && \
-    make llvm-tblgen llvm-link && \
+    make -j`nproc` llvm-tblgen llvm-link && \
     cd .. && \
     mkdir wasm && \
     cd wasm && \
