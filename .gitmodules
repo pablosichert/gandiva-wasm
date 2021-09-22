@@ -1,0 +1,9 @@
+[submodule "openssl"]
+	path = openssl
+	url = https://github.com/openssl/openssl
+[submodule "arrow"]
+	path = arrow
+	url = https://github.com/pablosichert/arrow
+[submodule "llvm-project"]
+	path = llvm-project
+	url = https://github.com/pablosichert/llvm-project
