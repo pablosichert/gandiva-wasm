@@ -8,4 +8,6 @@ export default {
   testMatch: [
     "**/tests/*.ts",
   ],
+  // Default timeout of a test in milliseconds.
+  testTimeout: 60000,
 };
