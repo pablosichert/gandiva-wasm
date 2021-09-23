@@ -1,0 +1,32 @@
+{
+  "name": "gandiva-wasm",
+  "version": "0.0.0",
+  "description": "Gandiva powered by WebAssembly",
+  "license": "MIT",
+  "repository": "https://github.com/pablosichert/gandiva-wasm",
+  "devDependencies": {
+    "@babel/preset-env": "^7.15.6",
+    "@babel/preset-typescript": "^7.15.0",
+    "@types/emscripten": "^1.39.5",
+    "@types/jest": "^27.0.2",
+    "apache-arrow": "^5.0.0",
+    "esbuild": "^0.13.1",
+    "jest": "^27.2.1",
+    "make-dir": "^3.1.0",
+    "ts-node": "^10.2.1",
+    "typescript": "^4.4.3"
+  },
+  "scripts": {
+    "build:debug": "node bundle.mjs debug",
+    "build:release": "node bundle.mjs release",
+    "test": "node --experimental-wasm-eh node_modules/.bin/jest"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/gandiva.node.js",
+  "module": "./dist/gandiva.module.js",
+  "browser": {
+    "./dist/gandiva.node.js": "./dist/gandiva.browser.js"
+  }
+}
