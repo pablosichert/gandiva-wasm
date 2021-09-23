@@ -9,5 +9,13 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: true
-    - name: Build Gandiva Wasm
-      run: ./scripts/build.sh
+    - name: Build OpenSSL
+      run: ./scripts/build_openssl.sh
+    - name: Build LLVM
+      run: ./scripts/build_llvm.sh
+    - name: Build Gandiva
+      run: ./scripts/build_gandiva.sh
+    - name: npm install
+      run: npm install
+    - name: npm test
+      run: npm test
