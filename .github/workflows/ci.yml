@@ -20,5 +20,7 @@ jobs:
       run: ./scripts/build_gandiva.sh
     - name: npm install
       run: npm install
+    - name: npm run build:release
+      run: npm run build:release
     - name: npm test
       run: npm test

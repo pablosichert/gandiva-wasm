@@ -61,6 +61,7 @@ esbuild.build({
     minify: true,
     define: { 'process.env.NODE_ENV': '"production"' },
     sourcemap: is_debug ? 'inline' : true,
+    external: EXTERNALS,
 });
 
 // -------------------------------
