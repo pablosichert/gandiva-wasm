@@ -62,44 +62,11 @@ test('TestSimple', async () => {
         result.push(JSON.parse(await Arrow.RecordBatchJSONWriter.writeAll(table).toString()));
     }
 
-    expect(result).toStrictEqual([
-        {
-            "schema": {
-                "fields": [
-                    {
-                        "name": "result",
-                        "nullable": false,
-                        "type": {
-                            "name": "int",
-                            "bitWidth": 16,
-                            "isSigned": true
-                        },
-                        "children": []
-                    }
-                ]
-            },
-            "batches": [
-                {
-                    "count": 2,
-                    "columns": [
-                        {
-                            "name": "result",
-                            "count": 2,
-                            "VALIDITY": [
-                                1,
-                                1
-                            ],
-                            "DATA": [
-                                0,
-                                4,
-                                17984,
-                                40,
-                                0
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
-    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].batches).toHaveLength(1);
+    expect(result[0].batches[0].count).toBe(2);
+    expect(result[0].batches[0].columns).toHaveLength(1);
+    expect(result[0].batches[0].columns[0].count).toBe(2);
+    expect(result[0].batches[0].columns[0].DATA.slice(0, 2)).toEqual([0, 4]);
+    expect(result[0].batches[0].columns[0].VALIDITY.slice(0, 2)).toEqual([1, 1]);
 });

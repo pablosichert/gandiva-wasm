@@ -71,71 +71,14 @@ test('TestTime', async () => {
         result.push(JSON.parse(await Arrow.RecordBatchJSONWriter.writeAll(table).toString()));
     }
 
-    expect(result).toStrictEqual([
-        {
-            "schema": {
-                "fields": [
-                    {
-                        "name": "mm",
-                        "nullable": false,
-                        "type": {
-                            "name": "int",
-                            "bitWidth": 64,
-                            "isSigned": true
-                        },
-                        "children": []
-                    },
-                    {
-                        "name": "hh",
-                        "nullable": false,
-                        "type": {
-                            "name": "int",
-                            "bitWidth": 64,
-                            "isSigned": true
-                        },
-                        "children": []
-                    }
-                ]
-            },
-            "batches": [
-                {
-                    "count": 4,
-                    "columns": [
-                        {
-                            "name": "mm",
-                            "count": 4,
-                            "VALIDITY": [
-                                1,
-                                1,
-                                1,
-                                1
-                            ],
-                            "DATA": [
-                                "35",
-                                "59",
-                                "30",
-                                "0"
-                            ]
-                        },
-                        {
-                            "name": "hh",
-                            "count": 4,
-                            "VALIDITY": [
-                                1,
-                                1,
-                                1,
-                                1
-                            ],
-                            "DATA": [
-                                "5",
-                                "0",
-                                "12",
-                                "23"
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
-    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].batches).toHaveLength(1);
+    expect(result[0].batches[0].count).toBe(4);
+    expect(result[0].batches[0].columns).toHaveLength(2);
+    expect(result[0].batches[0].columns[0].count).toBe(4);
+    expect(result[0].batches[0].columns[0].DATA.slice(0, 4)).toEqual(["35", "59", "30", "0"]);
+    expect(result[0].batches[0].columns[0].VALIDITY.slice(0, 4)).toEqual([1, 1, 1, 1]);
+    expect(result[0].batches[0].columns[1].count).toBe(4);
+    expect(result[0].batches[0].columns[1].DATA.slice(0, 4)).toEqual(["5", "0", "12", "23"]);
+    expect(result[0].batches[0].columns[1].VALIDITY.slice(0, 4)).toEqual([1, 1, 1, 1]);
 });

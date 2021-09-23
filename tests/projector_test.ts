@@ -63,69 +63,16 @@ test('TestIntSumSub', async () => {
         result.push(JSON.parse(await Arrow.RecordBatchJSONWriter.writeAll(table).toString()));
     }
 
-    expect(result).toStrictEqual([{
-        "schema": {
-            "fields": [
-                {
-                    "name": "add",
-                    "nullable": false,
-                    "type": {
-                        "name": "int",
-                        "bitWidth": 32,
-                        "isSigned": true
-                    },
-                    "children": []
-                },
-                {
-                    "name": "subtract",
-                    "nullable": false,
-                    "type": {
-                        "name": "int",
-                        "bitWidth": 32,
-                        "isSigned": true
-                    },
-                    "children": []
-                }
-            ]
-        },
-        "batches": [
-            {
-                "count": 4,
-                "columns": [
-                    {
-                        "name": "add",
-                        "count": 4,
-                        "VALIDITY": [
-                            1,
-                            1,
-                            0,
-                            0
-                        ],
-                        "DATA": [
-                            12,
-                            15,
-                            3,
-                            17
-                        ]
-                    },
-                    {
-                        "name": "subtract",
-                        "count": 4,
-                        "VALIDITY": [
-                            1,
-                            1,
-                            0,
-                            0
-                        ],
-                        "DATA": [
-                            -10,
-                            -11,
-                            3,
-                            -17
-                        ]
-                    }
-                ]
-            }
-        ]
-    }]);
+    expect(result).toHaveLength(1);
+    expect(result[0].batches).toHaveLength(1);
+    expect(result[0].batches[0].count).toBe(4);
+    expect(result[0].batches[0].columns).toHaveLength(2);
+    expect(result[0].batches[0].columns[0].count).toBe(4);
+    expect(result[0].batches[0].columns[0].DATA[0]).toBe(12);
+    expect(result[0].batches[0].columns[0].DATA[1]).toBe(15);
+    expect(result[0].batches[0].columns[0].VALIDITY.slice(0, 4)).toEqual([1, 1, 0, 0]);
+    expect(result[0].batches[0].columns[1].count).toBe(4);
+    expect(result[0].batches[0].columns[1].DATA[0]).toBe(-10);
+    expect(result[0].batches[0].columns[1].DATA[1]).toBe(-11);
+    expect(result[0].batches[0].columns[1].VALIDITY.slice(0, 4)).toEqual([1, 1, 0, 0]);
 });
