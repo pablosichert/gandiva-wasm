@@ -33,49 +33,60 @@ fs.copyFileSync(path.resolve(release, 'gandiva_wasm.js'), path.resolve(dist, 'ga
 const TARGET = ['esnext'];
 const EXTERNALS = ['fs', 'path'];
 
-console.log('[ ESBUILD ] gandiva.module.js');
-esbuild.build({
-    entryPoints: ['./dist/gandiva_wasm.js'],
-    outfile: 'dist/gandiva.module.js',
-    platform: 'neutral',
-    format: 'esm',
-    target: TARGET,
-    bundle: true,
-    minify: true,
-    sourcemap: true,
-    external: EXTERNALS,
-});
+(async () => {
+    console.log('[ESBUILD] gandiva.module.js');
+    await esbuild.build({
+        entryPoints: ['./dist/gandiva_wasm.js'],
+        outfile: 'dist/gandiva.module.js',
+        platform: 'neutral',
+        format: 'esm',
+        target: TARGET,
+        bundle: true,
+        minify: true,
+        sourcemap: true,
+        external: EXTERNALS,
+    });
 
-// -------------------------------
-// Browser
+    console.log('[ESBUILD] gandiva.browser.js');
+    await esbuild.build({
+        entryPoints: ['./dist/gandiva_wasm.js'],
+        outfile: 'dist/gandiva.browser.js',
+        platform: 'browser',
+        format: 'iife',
+        globalName: 'gandiva',
+        target: TARGET,
+        bundle: true,
+        minify: true,
+        define: { 'process.env.NODE_ENV': '"production"' },
+        sourcemap: is_debug ? 'inline' : true,
+        external: EXTERNALS,
+    });
 
-console.log('[ ESBUILD ] gandiva.browser.js');
-esbuild.build({
-    entryPoints: ['./dist/gandiva_wasm.js'],
-    outfile: 'dist/gandiva.browser.js',
-    platform: 'browser',
-    format: 'iife',
-    globalName: 'gandiva',
-    target: TARGET,
-    bundle: true,
-    minify: true,
-    define: { 'process.env.NODE_ENV': '"production"' },
-    sourcemap: is_debug ? 'inline' : true,
-    external: EXTERNALS,
-});
+    console.log('[ESBUILD] gandiva.node.js');
+    await esbuild.build({
+        entryPoints: ['./dist/gandiva_wasm.js'],
+        outfile: 'dist/gandiva.node.js',
+        platform: 'node',
+        format: 'cjs',
+        target: TARGET,
+        bundle: true,
+        minify: true,
+        sourcemap: is_debug ? 'inline' : true,
+        external: EXTERNALS,
+    });
 
-// -------------------------------
-// NODE
-
-console.log('[ ESBUILD ] gandiva.node.js');
-esbuild.build({
-    entryPoints: ['./dist/gandiva_wasm.js'],
-    outfile: 'dist/gandiva.node.js',
-    platform: 'node',
-    format: 'cjs',
-    target: TARGET,
-    bundle: true,
-    minify: true,
-    sourcemap: is_debug ? 'inline' : true,
-    external: EXTERNALS,
-});
+    console.log('[ESBUILD] gandiva.benchmark.browser.js');
+    await esbuild.build({
+        entryPoints: ['./benchmarks/index.browser.ts'],
+        outfile: 'dist/gandiva.benchmark.browser.js',
+        platform: 'browser',
+        format: 'iife',
+        globalName: 'gandiva',
+        target: TARGET,
+        bundle: true,
+        minify: true,
+        define: { 'process.env.NODE_ENV': '"production"' },
+        sourcemap: is_debug ? 'inline' : true,
+        external: EXTERNALS,
+    });
+})();

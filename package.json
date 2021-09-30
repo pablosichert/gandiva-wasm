@@ -7,19 +7,28 @@
   "devDependencies": {
     "@babel/preset-env": "^7.15.6",
     "@babel/preset-typescript": "^7.15.0",
+    "@types/benchmark": "^2.1.1",
     "@types/emscripten": "^1.39.5",
     "@types/jest": "^27.0.2",
     "apache-arrow": "^5.0.0",
+    "arquero": "^4.8.7",
+    "benchmark": "^2.1.4",
     "esbuild": "^0.13.1",
     "jest": "^27.2.1",
+    "karma": "^6.3.4",
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-custom": "^1.1.9",
+    "lodash": "^4.17.21",
     "make-dir": "^3.1.0",
+    "puppeteer": "^10.4.0",
     "ts-node": "^10.2.1",
     "typescript": "^4.4.3"
   },
   "scripts": {
     "build:debug": "node bundle.mjs debug",
     "build:release": "node bundle.mjs release",
-    "test": "node --experimental-wasm-eh node_modules/.bin/jest"
+    "test:node": "node --experimental-wasm-eh node_modules/.bin/jest",
+    "benchmark:browser": "npx karma start benchmarks/karma.conf.cjs"
   },
   "files": [
     "dist"

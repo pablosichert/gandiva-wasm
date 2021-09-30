@@ -6,21 +6,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: true
-    - uses: actions/setup-node@v2
-      with:
-        node-version: '16'
-    - name: Build OpenSSL
-      run: ./scripts/build_openssl.sh
-    - name: Build LLVM
-      run: ./scripts/build_llvm.sh
-    - name: Build Gandiva
-      run: ./scripts/build_gandiva.sh
-    - name: npm install
-      run: npm install
-    - name: npm run build:release
-      run: npm run build:release
-    - name: npm test
-      run: npm test
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+      - name: Build OpenSSL
+        run: ./scripts/build_openssl.sh
+      - name: Build LLVM
+        run: ./scripts/build_llvm.sh
+      - name: Build Gandiva
+        run: ./scripts/build_gandiva.sh
+      - name: npm install
+        run: npm install
+      - name: npm run build:release
+        run: npm run build:release
+      - name: npm run test:node
+        run: npm run test:node
+      - name: npm run benchmark:browser
+        run: npm run benchmark:browser
