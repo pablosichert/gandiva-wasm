@@ -5,15 +5,15 @@ import * as Arrow from "apache-arrow";
 async function makeReader(table) {
     const writer = Arrow.RecordBatchFileWriter.writeAll(table);
     const buffer = await writer.toUint8Array();
-    return Module.makeReader(buffer);
+    return Gandiva.makeReader(buffer);
 }
 
-let Module;
+let Gandiva;
 
 beforeAll(async () => {
     console.warn = () => { };
 
-    Module = await wasmModule({
+    Gandiva = await wasmModule({
         locateFile: (file: string) => path.join(__dirname, "..", "dist", file),
     });
 });
@@ -55,27 +55,27 @@ test('TestCastTimestamp', async () => {
 
     const readerOut = await makeReader(Arrow.Table.empty(new Arrow.Schema([Arrow.Field.new("result", new Arrow.TimestampMillisecond())])));
 
-    const schema = Module.readerSchema(reader);
-    const schemaOut = Module.readerSchema(readerOut);
+    const schema = Gandiva.readerSchema(reader);
+    const schemaOut = Gandiva.readerSchema(readerOut);
 
-    const field0 = Module.schemaFieldByName(schema, "f0");
-    const fieldResult = Module.schemaFieldByName(schemaOut, "result");
+    const field0 = Gandiva.schemaFieldByName(schema, "f0");
+    const fieldResult = Gandiva.schemaFieldByName(schemaOut, "result");
 
-    const castTimestampExpressionFields = new Module.FieldVector();
+    const castTimestampExpressionFields = new Gandiva.FieldVector();
     castTimestampExpressionFields.push_back(field0);
-    const castTimestampExpression = Module.makeFunctionExpression("castTIMESTAMP", castTimestampExpressionFields, fieldResult);
+    const castTimestampExpression = Gandiva.makeFunctionExpression("castTIMESTAMP", castTimestampExpressionFields, fieldResult);
 
-    const expressionVector = new Module.ExpressionVector();
+    const expressionVector = new Gandiva.ExpressionVector();
     expressionVector.push_back(castTimestampExpression);
-    const projector = Module.makeProjector(schema, expressionVector);
+    const projector = Gandiva.makeProjector(schema, expressionVector);
 
     const result = [];
 
-    for (let i = 0; i < Module.readerNumRecordBatches(reader); i++) {
-        const batch = Module.readerReadRecordBatch(reader, i);
-        const arrayVector = Module.projectorEvaluate(projector, batch);
-        const buffer = Module.arrayVectorToBuffer(arrayVector, schemaOut);
-        const bufferView = Module.bufferView(buffer);
+    for (let i = 0; i < Gandiva.readerNumRecordBatches(reader); i++) {
+        const batch = Gandiva.readerReadRecordBatch(reader, i);
+        const arrayVector = Gandiva.projectorEvaluate(projector, batch);
+        const buffer = Gandiva.arrayVectorToBuffer(arrayVector, schemaOut);
+        const bufferView = Gandiva.bufferView(buffer);
         const table = Arrow.Table.from(bufferView);
         result.push(JSON.parse(await Arrow.RecordBatchJSONWriter.writeAll(table).toString()));
     }

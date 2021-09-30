@@ -5,15 +5,15 @@ import * as Arrow from "apache-arrow";
 async function makeReader(table) {
     const writer = Arrow.RecordBatchFileWriter.writeAll(table);
     const buffer = await writer.toUint8Array();
-    return Module.makeReader(buffer);
+    return Gandiva.makeReader(buffer);
 }
 
-let Module;
+let Gandiva;
 
 beforeAll(async () => {
     console.warn = () => { };
 
-    Module = await wasmModule({
+    Gandiva = await wasmModule({
         locateFile: (file: string) => path.join(__dirname, "..", "dist", file),
     });
 });
@@ -29,36 +29,36 @@ test('TestIntSumSub', async () => {
         Arrow.Field.new("subtract", new Arrow.Int32())
     ])));
 
-    const schema = Module.readerSchema(reader);
-    const schemaOut = Module.readerSchema(readerOut);
+    const schema = Gandiva.readerSchema(reader);
+    const schemaOut = Gandiva.readerSchema(readerOut);
 
-    const field0 = Module.schemaFieldByName(schema, "f0");
-    const field1 = Module.schemaFieldByName(schema, "f1");
-    const fieldSum = Module.schemaFieldByName(schemaOut, "add");
-    const fieldSub = Module.schemaFieldByName(schemaOut, "subtract");
+    const field0 = Gandiva.schemaFieldByName(schema, "f0");
+    const field1 = Gandiva.schemaFieldByName(schema, "f1");
+    const fieldSum = Gandiva.schemaFieldByName(schemaOut, "add");
+    const fieldSub = Gandiva.schemaFieldByName(schemaOut, "subtract");
 
-    const sumExpressionFields = new Module.FieldVector();
+    const sumExpressionFields = new Gandiva.FieldVector();
     sumExpressionFields.push_back(field0);
     sumExpressionFields.push_back(field1);
-    const sumExpression = Module.makeFunctionExpression("add", sumExpressionFields, fieldSum);
+    const sumExpression = Gandiva.makeFunctionExpression("add", sumExpressionFields, fieldSum);
 
-    const subExpressionFields = new Module.FieldVector();
+    const subExpressionFields = new Gandiva.FieldVector();
     subExpressionFields.push_back(field0);
     subExpressionFields.push_back(field1);
-    const subExpression = Module.makeFunctionExpression("subtract", subExpressionFields, fieldSub);
+    const subExpression = Gandiva.makeFunctionExpression("subtract", subExpressionFields, fieldSub);
 
-    const expressionVector = new Module.ExpressionVector();
+    const expressionVector = new Gandiva.ExpressionVector();
     expressionVector.push_back(sumExpression);
     expressionVector.push_back(subExpression);
-    const projector = Module.makeProjector(schema, expressionVector);
+    const projector = Gandiva.makeProjector(schema, expressionVector);
 
     const result = [];
 
-    for (let i = 0; i < Module.readerNumRecordBatches(reader); i++) {
-        const batch = Module.readerReadRecordBatch(reader, i);
-        const arrayVector = Module.projectorEvaluate(projector, batch);
-        const buffer = Module.arrayVectorToBuffer(arrayVector, schemaOut);
-        const bufferView = Module.bufferView(buffer);
+    for (let i = 0; i < Gandiva.readerNumRecordBatches(reader); i++) {
+        const batch = Gandiva.readerReadRecordBatch(reader, i);
+        const arrayVector = Gandiva.projectorEvaluate(projector, batch);
+        const buffer = Gandiva.arrayVectorToBuffer(arrayVector, schemaOut);
+        const bufferView = Gandiva.bufferView(buffer);
         const table = Arrow.Table.from(bufferView);
         result.push(JSON.parse(await Arrow.RecordBatchJSONWriter.writeAll(table).toString()));
     }

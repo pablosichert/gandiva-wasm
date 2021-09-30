@@ -5,21 +5,21 @@ import * as Arrow from "apache-arrow";
 async function makeReader(table) {
     const writer = Arrow.RecordBatchFileWriter.writeAll(table);
     const buffer = await writer.toUint8Array();
-    return Module.makeReader(buffer);
+    return Gandiva.makeReader(buffer);
 }
 
-let Module;
+let Gandiva;
 
 beforeAll(async () => {
     console.warn = () => { };
 
-    Module = await wasmModule({
+    Gandiva = await wasmModule({
         locateFile: (file: string) => path.join(__dirname, "..", "dist", file),
     });
 });
 
 test('TestSimple16', async () => {
-    const typeBoolean = Module.typeBoolean();
+    const typeBoolean = Gandiva.typeBoolean();
 
     const reader = await makeReader(Arrow.Table.new([
         Arrow.Int32Vector.from([1, 2, 6, 40, 3]),
@@ -29,40 +29,40 @@ test('TestSimple16', async () => {
 
     const readerOut = await makeReader(Arrow.Table.empty(new Arrow.Schema([Arrow.Field.new("result", new Arrow.Int32())])));
 
-    const schema = Module.readerSchema(reader);
-    const schemaOut = Module.readerSchema(readerOut);
+    const schema = Gandiva.readerSchema(reader);
+    const schemaOut = Gandiva.readerSchema(readerOut);
 
-    const field0 = Module.schemaFieldByName(schema, "f0");
-    const field1 = Module.schemaFieldByName(schema, "f1");
-    const field2 = Module.schemaFieldByName(schema, "f2");
-    const fieldResult = Module.schemaFieldByName(schemaOut, "result");
-    const nodeF0 = Module.makeField(field0);
-    const nodeF1 = Module.makeField(field1);
+    const field0 = Gandiva.schemaFieldByName(schema, "f0");
+    const field1 = Gandiva.schemaFieldByName(schema, "f1");
+    const field2 = Gandiva.schemaFieldByName(schema, "f2");
+    const fieldResult = Gandiva.schemaFieldByName(schemaOut, "result");
+    const nodeF0 = Gandiva.makeField(field0);
+    const nodeF1 = Gandiva.makeField(field1);
 
-    const lessThanNodes = new Module.NodeVector();
+    const lessThanNodes = new Gandiva.NodeVector();
     lessThanNodes.push_back(nodeF0);
     lessThanNodes.push_back(nodeF1);
-    const lessThanFunction = Module.makeFunction("less_than", lessThanNodes, typeBoolean);
-    const condition = Module.makeCondition(lessThanFunction);
-    const sumFields = new Module.FieldVector();
+    const lessThanFunction = Gandiva.makeFunction("less_than", lessThanNodes, typeBoolean);
+    const condition = Gandiva.makeCondition(lessThanFunction);
+    const sumFields = new Gandiva.FieldVector();
     sumFields.push_back(field1);
     sumFields.push_back(field2);
-    const sumExpression = Module.makeFunctionExpression("add", sumFields, fieldResult);
-    const filter = Module.makeFilter(schema, condition);
-    const projectorExpressions = new Module.ExpressionVector();
+    const sumExpression = Gandiva.makeFunctionExpression("add", sumFields, fieldResult);
+    const filter = Gandiva.makeFilter(schema, condition);
+    const projectorExpressions = new Gandiva.ExpressionVector();
     projectorExpressions.push_back(sumExpression);
-    const projector = Module.makeProjectorWithSelectionVectorMode(schema, projectorExpressions, Module.SelectionVectorMode.UINT16);
+    const projector = Gandiva.makeProjectorWithSelectionVectorMode(schema, projectorExpressions, Gandiva.SelectionVectorMode.UINT16);
 
     const result = [];
 
-    for (let i = 0; i < Module.readerNumRecordBatches(reader); i++) {
-        const batch = Module.readerReadRecordBatch(reader, i);
-        const numRows = Module.batchNumRows(batch);
-        const selectionVector = Module.selectionVectorMakeInt16(numRows);
-        Module.filterEvaluate(filter, selectionVector, batch);
-        const arrayVector = Module.projectorEvaluateWithSelectionVector(projector, selectionVector, batch);
-        const buffer = Module.arrayVectorToBuffer(arrayVector, schemaOut);
-        const bufferView = Module.bufferView(buffer);
+    for (let i = 0; i < Gandiva.readerNumRecordBatches(reader); i++) {
+        const batch = Gandiva.readerReadRecordBatch(reader, i);
+        const numRows = Gandiva.batchNumRows(batch);
+        const selectionVector = Gandiva.selectionVectorMakeInt16(numRows);
+        Gandiva.filterEvaluate(filter, selectionVector, batch);
+        const arrayVector = Gandiva.projectorEvaluateWithSelectionVector(projector, selectionVector, batch);
+        const buffer = Gandiva.arrayVectorToBuffer(arrayVector, schemaOut);
+        const bufferView = Gandiva.bufferView(buffer);
         const table = Arrow.Table.from(bufferView);
         result.push(JSON.parse(await Arrow.RecordBatchJSONWriter.writeAll(table).toString()));
     }
