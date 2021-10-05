@@ -34,7 +34,7 @@ test('TestLike', async () => {
     const fieldResult = Gandiva.schemaFieldByName(schemaOut, "result");
 
     const nodeA = Gandiva.makeField(fieldA);
-    const literalS = Gandiva.makeStringLiteral("%spark%");
+    const literalS = Gandiva.makeLiteralString("%spark%");
     const isLikeNodes = new Gandiva.NodeVector();
     isLikeNodes.push_back(nodeA);
     isLikeNodes.push_back(literalS);
