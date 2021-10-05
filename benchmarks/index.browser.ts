@@ -2,6 +2,7 @@ import * as Arrow from "../node_modules/apache-arrow/Arrow.dom";
 import * as Arquero from "arquero";
 import wasmModule from "../dist/gandiva.module";
 import Benchmark from "benchmark";
+import filterStrings from "./filterStrings";
 import filterInts from "./filterInts";
 
 async function main() {
@@ -16,6 +17,7 @@ async function main() {
         return await blob.arrayBuffer();
     };
 
+    await filterStrings(Benchmark, Arrow, Gandiva, Arquero, fetchData);
     await filterInts(Benchmark, Arrow, Gandiva, Arquero, fetchData);
     console.warn = warn;
 }

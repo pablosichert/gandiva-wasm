@@ -15,6 +15,7 @@ module.exports = function (config) {
             { pattern: 'node_modules/benchmark/benchmark.js', included: true, watched: false, served: true },
             { pattern: 'dist/gandiva.benchmark.browser.js', included: true, watched: false, served: true },
             { pattern: 'dist/*', included: false, watched: false, served: true },
+            { pattern: 'benchmarks/data/*', included: false, watched: false, served: true },
         ],
         autoWatch: false,
         singleRun: true,
@@ -27,5 +28,6 @@ module.exports = function (config) {
         },
         concurrency: 1, // Only one browser at a time.
         browserNoActivityTimeout: 999999999,
+        pingTimeout: 999999999,
     });
 };
