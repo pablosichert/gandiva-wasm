@@ -1,0 +1,13 @@
+[package]
+name = "generate_data"
+version = "0.0.0"
+authors = ["Pablo Sichert <mail@pablosichert.com>"]
+edition = "2018"
+
+[[bin]]
+name = "generate_data"
+path = "main.rs"
+
+[dependencies]
+arrow = "5"
+rand = "0.8"
