@@ -1,6 +1,5 @@
 import type { Event, Suite } from "benchmark";
 import type { Table } from "apache-arrow";
-import shuffle from "lodash/shuffle";
 
 type Benchmark = typeof import("benchmark");
 type Arrow = typeof import("apache-arrow");
@@ -26,13 +25,12 @@ async function verifyResult(Arrow: Arrow, buffer: ArrayBuffer) {
         console.assert(result.batches[0].columns.length == 1, "result.batches[0].columns.length", result.batches[0].columns.length, "==", 1);
         console.assert(result.batches[0].columns[0].count == expectedRows, "result.batches[0].columns[0].count", result.batches[0].columns[0].count, "==", expectedRows);
 
-        const validity = JSON.stringify(result.batches[0].columns[0].VALIDITY);
-        const validityExpected = JSON.stringify(new Array(expectedRows).fill(1));
-        console.assert(validity == validityExpected, "validity", validity, "==", validityExpected);
+        const serialized = [...table].map(row => row["0"].toString()).sort();
 
-        const data = JSON.stringify(result.batches[0].columns[0].DATA.slice(0, 10).sort());
-        const dataExpected = JSON.stringify(new Array(expectedRows).fill(0).map((_, index) => index));
+        const data = JSON.stringify(serialized);
+        const dataExpected = JSON.stringify(new Array(expectedRows).fill("").map((_, index) => index.toString()));
         console.assert(data == dataExpected, "data", data, "==", dataExpected);
+
     } catch (error) {
         console.error("error occurred while verifying result", error);
     }
@@ -111,27 +109,27 @@ async function filterGandiva(Benchmark: Benchmark, Arrow: Arrow, Gandiva: any, t
         const suite = new Benchmark.Suite();
 
         suite
-            .add(`Gandiva copy buffer (${numRows})`, runAsync(async () => {
+            .add(`Gandiva copy buffer (${numRows}) int32`, runAsync(async () => {
                 const reader = await makeReader(table);
                 reader.delete();
             }))
-            .add(`Gandiva compile filter (${numRows})`, () => {
+            .add(`Gandiva compile filter (${numRows}) int32`, () => {
                 const filter = compileFilter();
                 filter.delete();
             })
-            .add(`Gandiva evaluate filter (${numRows})`, () => {
+            .add(`Gandiva evaluate filter (${numRows}) int32`, () => {
                 const selectionVector = evaluateFilter();
                 selectionVector.delete();
             })
-            .add(`Gandiva compile projector (${numRows})`, () => {
+            .add(`Gandiva compile projector (${numRows}) int32`, () => {
                 const projector = compileProjector();
                 projector.delete();
             })
-            .add(`Gandiva evaluate projector (${numRows})`, () => {
+            .add(`Gandiva evaluate projector (${numRows}) int32`, () => {
                 const buffer = evaluateProjector();
                 buffer.delete();
             })
-            .add(`Gandiva to Arrow (${numRows})`, toArrow)
+            .add(`Gandiva to Arrow (${numRows}) int32`, toArrow)
             .on('cycle', (event: Event) => {
                 console.log(String(event.target));
             })
@@ -163,8 +161,8 @@ async function filterArquero(Benchmark: Benchmark, Arrow: Arrow, Arquero: Arquer
         const suite = new Benchmark.Suite();
 
         suite
-            .add(`Arquero evaluate filter (${numRows})`, evaluateFilter)
-            .add(`Arquero to Arrow (${numRows})`, toArrow)
+            .add(`Arquero evaluate filter (${numRows}) int32`, evaluateFilter)
+            .add(`Arquero to Arrow (${numRows}) int32`, toArrow)
             .on('cycle', (event: Event) => {
                 console.log(String(event.target));
             })
@@ -175,11 +173,10 @@ async function filterArquero(Benchmark: Benchmark, Arrow: Arrow, Arquero: Arquer
     });
 }
 
-export default async function (Benchmark: Benchmark, Arrow: Arrow, Gandiva: any, Arquero: Arquero) {
+export default async function (Benchmark: Benchmark, Arrow: Arrow, Gandiva: any, Arquero: Arquero, fetchData: (file: string) => Promise<ArrayBuffer>) {
     for (const numRows of [1_000, 10_000, 100_000, 1_000_000, 10_000_000]) {
-        const data = shuffle(new Array(numRows).fill(0).map((_, index) => index));
-        const batch = Arrow.RecordBatch.new([Arrow.Int32Vector.from(data)]);
-        const table = new Arrow.Table([batch]);
+        const arrow = await fetchData(`int32.${numRows}.arrow`);
+        const table = Arrow.Table.from([arrow]);
 
         console.assert(table.chunks.length == 1, "table.chunks.length", table.chunks.length, "==", 1);
 

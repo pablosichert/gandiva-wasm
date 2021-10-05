@@ -2,7 +2,7 @@ import * as Arrow from "../node_modules/apache-arrow/Arrow.dom";
 import * as Arquero from "arquero";
 import wasmModule from "../dist/gandiva.module";
 import Benchmark from "benchmark";
-import filter from "./filter";
+import filterInts from "./filterInts";
 
 async function main() {
     const warn = console.warn.bind(console);
@@ -10,7 +10,13 @@ async function main() {
     const Gandiva = await wasmModule({
         locateFile: (file: string) => `base/dist/${file}`,
     });
-    await filter(Benchmark, Arrow, Gandiva, Arquero);
+    const fetchData = async (file: string) => {
+        const response = await fetch(`base/benchmarks/data/${file}`);
+        const blob = await response.blob();
+        return await blob.arrayBuffer();
+    };
+
+    await filterInts(Benchmark, Arrow, Gandiva, Arquero, fetchData);
     console.warn = warn;
 }
 
