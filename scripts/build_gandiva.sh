@@ -22,4 +22,6 @@ $RUN bash -c "
         -DARROW_CPU_FLAG= \
         .. && \
     emmake make -j`nproc` gandiva_wasm
+    sed -i -- 's/\"dlopen\":_dlopen/\"dlopen\":()=>-1/g' release/gandiva_wasm.js
+    sed -i -- 's/\"dlclose\":_dlclose/\"dlclose\":()=>0/g' release/gandiva_wasm.js
 "
