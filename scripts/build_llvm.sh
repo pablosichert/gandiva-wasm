@@ -21,7 +21,8 @@ $RUN bash -c "
         -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE \
         -DCMAKE_CROSSCOMPILING=True \
         -DLLVM_TABLEGEN=/mnt/llvm-project/llvm/build/native/bin/llvm-tblgen \
-        -DLLVM_DEFAULT_TARGET_TRIPLE=wasm32-unknown-emscripten \
+        -DLLVM_HOST_TRIPLE=wasm32-unknown-unknown-wasm \
+        -DLLVM_DEFAULT_TARGET_TRIPLE=wasm32-unknown-unknown-wasm \
         -DLLVM_TARGET_ARCH=wasm32 \
         -DLLVM_TARGETS_TO_BUILD=WebAssembly \
         ../.. && \
