@@ -13,11 +13,11 @@ jobs:
         with:
           node-version: "16"
       - name: Build OpenSSL
-        run: ./scripts/build_openssl.sh
+        run: ./scripts/build_openssl.sh release
       - name: Build LLVM
-        run: ./scripts/build_llvm.sh
+        run: ./scripts/build_llvm.sh release
       - name: Build Gandiva
-        run: ./scripts/build_gandiva.sh
+        run: ./scripts/build_gandiva.sh release
       - name: npm install
         run: npm install
       - name: npm run build:release

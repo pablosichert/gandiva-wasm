@@ -3,13 +3,20 @@ DOCKER_IMAGE_ID="$(docker build --quiet - < Dockerfile)"
 
 RUN="docker run --rm --mount type=bind,source=$PROJECT_DIR,target=/mnt $DOCKER_IMAGE_ID"
 
+MODE=debug
+CMAKE_BUILD_TYPE=Debug
+if [ "$1" = "release" ]; then
+    MODE=release
+    CMAKE_BUILD_TYPE=Release
+fi
+
 echo "Building Gandiva"
 $RUN bash -c "
     source /root/emsdk/emsdk_env.sh && \
     mkdir -p /mnt/arrow/cpp/build && \
     cd /mnt/arrow/cpp/build && \
     emcmake cmake \
-        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE \
         -DARROW_GANDIVA=ON \
         -DLLVM_DIR=/mnt/llvm-project/llvm/build/wasm/lib/cmake/llvm \
         -DLLVM_TOOLS_BINARY_DIR=/mnt/llvm-project/llvm/build/wasm/lib/cmake/llvm \
@@ -22,6 +29,6 @@ $RUN bash -c "
         -DARROW_CPU_FLAG= \
         .. && \
     emmake make -j`nproc` gandiva_wasm
-    sed -i -- 's/\"dlopen\":_dlopen/\"dlopen\":()=>-1/g' release/gandiva_wasm.js
-    sed -i -- 's/\"dlclose\":_dlclose/\"dlclose\":()=>0/g' release/gandiva_wasm.js
+    sed -i -- 's/\"dlopen\":\s*_dlopen/\"dlopen\":()=>-1/g' $MODE/gandiva_wasm.js
+    sed -i -- 's/\"dlclose\":\s*_dlclose/\"dlclose\":()=>0/g' $MODE/gandiva_wasm.js
 "
