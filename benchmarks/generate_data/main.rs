@@ -50,7 +50,7 @@ fn create_batch_utf8(num_rows: usize) -> Result<(Schema, RecordBatch), Box<dyn s
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let target_dir = "../data";
 
-    for num_rows in [1000, 10_000, 100_000, 1_000_000, 10_000_000] {
+    for num_rows in [1024, 4096, 16384, 65536, 262144, 1048576] {
         {
             let file_name = format!("{}/int32.{}.arrow", target_dir, num_rows);
 

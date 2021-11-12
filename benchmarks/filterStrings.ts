@@ -1,19 +1,8 @@
 import type { Event, Suite } from "benchmark";
-import type { Table } from "apache-arrow";
 
 type Benchmark = typeof import("benchmark");
 type Arrow = typeof import("apache-arrow");
 type Arquero = typeof import("arquero");
-
-function runAsync(fn) {
-    return {
-        defer: true,
-        async fn(deferred) {
-            await fn();
-            deferred.resolve();
-        }
-    }
-}
 
 async function verifyResult(Arrow: Arrow, buffer: ArrayBuffer) {
     try {
@@ -35,19 +24,22 @@ async function verifyResult(Arrow: Arrow, buffer: ArrayBuffer) {
     }
 }
 
-async function filterGandiva(Benchmark: Benchmark, Arrow: Arrow, Gandiva: any, table: Table, numRows: number) {
+async function filterGandiva(Benchmark: Benchmark, Arrow: Arrow, Gandiva: any, arrow: ArrayBuffer, numRows: number) {
     Gandiva.setCacheCapacity(0);
 
-    async function makeReader(table) {
+    async function makeTable(table) {
         const writer = Arrow.RecordBatchFileWriter.writeAll(table);
-        const buffer = await writer.toUint8Array();
+        return await writer.toUint8Array();
+    }
+
+    function makeReader(buffer) {
         return Gandiva.makeReader(buffer);
     }
 
-    const reader = await makeReader(table);
-    const readerOut = await makeReader(Arrow.Table.empty(new Arrow.Schema([
+    const reader = makeReader(arrow);
+    const readerOut = makeReader(await makeTable(Arrow.Table.empty(new Arrow.Schema([
         Arrow.Field.new(0, new Arrow.Utf8()),
-    ])));
+    ]))));
 
     const schema = Gandiva.readerSchema(reader);
     const fieldIn = Gandiva.schemaField(schema, 0);
@@ -89,12 +81,16 @@ async function filterGandiva(Benchmark: Benchmark, Arrow: Arrow, Gandiva: any, t
     const projector = compileProjector();
 
     function evaluateProjector() {
-        const arrayVector = Gandiva.projectorEvaluateWithSelectionVector(projector, selectionVector, batch);
-        const buffer = Gandiva.arrayVectorToBuffer(arrayVector, schemaOut);
-        return buffer;
+        return Gandiva.projectorEvaluateWithSelectionVector(projector, selectionVector, batch);
     }
 
-    const buffer = evaluateProjector();
+    const arrayVector = evaluateProjector();
+
+    function toBuffer() {
+        return Gandiva.arrayVectorToBuffer(arrayVector, schemaOut);
+    }
+
+    const buffer = toBuffer();
 
     function toArrow() {
         return Gandiva.bufferView(buffer);
@@ -108,29 +104,33 @@ async function filterGandiva(Benchmark: Benchmark, Arrow: Arrow, Gandiva: any, t
         const suite = new Benchmark.Suite();
 
         suite
-            .add(`Gandiva copy buffer (${numRows}) utf8`, runAsync(async () => {
-                const reader = await makeReader(table);
+            .add(`Gandiva copy buffer (${numRows}) filter utf8`, () => {
+                const reader = makeReader(arrow);
                 reader.delete();
-            }))
-            .add(`Gandiva compile filter (${numRows}) utf8`, () => {
+            })
+            .add(`Gandiva compile filter (${numRows}) filter utf8`, () => {
                 const filter = compileFilter();
                 filter.delete();
             })
-            .add(`Gandiva evaluate filter (${numRows}) utf8`, () => {
+            .add(`Gandiva evaluate filter (${numRows}) filter utf8`, () => {
                 const selectionVector = evaluateFilter();
                 selectionVector.delete();
             })
-            .add(`Gandiva compile projector (${numRows}) utf8`, () => {
+            .add(`Gandiva compile projector (${numRows}) filter utf8`, () => {
                 const projector = compileProjector();
                 projector.delete();
             })
-            .add(`Gandiva evaluate projector (${numRows}) utf8`, () => {
-                const buffer = evaluateProjector();
+            .add(`Gandiva evaluate projector (${numRows}) filter utf8`, () => {
+                const arrayVector = evaluateProjector();
+                arrayVector.delete();
+            })
+            .add(`Gandiva to Buffer (${numRows}) filter utf8`, () => {
+                const buffer = toBuffer();
                 buffer.delete();
             })
-            .add(`Gandiva to Arrow (${numRows}) utf8`, toArrow)
+            .add(`Gandiva to Arrow (${numRows}) filter utf8`, toArrow)
             .on('cycle', (event: Event) => {
-                console.log(String(event.target));
+                console.log(`${event.target} ${((1 / event.target.stats.mean) * numRows).toFixed(2)}rows/s ${event.target.stats.mean * 1000}ms ${(event.target.stats.mean * 1000) / numRows}ms/row`);
             })
             .on('complete', (event: Event) => {
                 resolve(suite);
@@ -139,8 +139,12 @@ async function filterGandiva(Benchmark: Benchmark, Arrow: Arrow, Gandiva: any, t
     });
 }
 
-async function filterArquero(Benchmark: Benchmark, Arrow: Arrow, Arquero: Arquero, table: Table, numRows: number) {
-    const frame = Arquero.fromArrow(table);
+async function filterArquero(Benchmark: Benchmark, Arrow: Arrow, Arquero: Arquero, arrow: ArrayBuffer, numRows: number) {
+    function buildFrame() {
+        return Arquero.fromArrow(arrow);
+    }
+
+    const frame = buildFrame();
 
     function evaluateFilter() {
         return frame.filter('data => op.startswith(data[0], "#000000000")');
@@ -160,10 +164,11 @@ async function filterArquero(Benchmark: Benchmark, Arrow: Arrow, Arquero: Arquer
         const suite = new Benchmark.Suite();
 
         suite
-            .add(`Arquero evaluate filter (${numRows}) utf8`, evaluateFilter)
-            .add(`Arquero to Arrow (${numRows}) utf8`, toArrow)
+            .add(`Arquero build frame (${numRows}) filter utf8`, buildFrame)
+            .add(`Arquero evaluate filter (${numRows}) filter utf8`, evaluateFilter)
+            .add(`Arquero to Arrow (${numRows}) filter utf8`, toArrow)
             .on('cycle', (event: Event) => {
-                console.log(String(event.target));
+                console.log(`${event.target} ${((1 / event.target.stats.mean) * numRows).toFixed(2)}rows/s ${event.target.stats.mean * 1000}ms ${(event.target.stats.mean * 1000) / numRows}ms/row`);
             })
             .on('complete', (event: Event) => {
                 resolve(suite);
@@ -173,13 +178,13 @@ async function filterArquero(Benchmark: Benchmark, Arrow: Arrow, Arquero: Arquer
 }
 
 export default async function (Benchmark: Benchmark, Arrow: Arrow, Gandiva: any, Arquero: Arquero, fetchData: (file: string) => Promise<ArrayBuffer>) {
-    for (const numRows of [1_000, 10_000, 100_000, 1_000_000]) {
+    for (const numRows of [1048576, 262144, 65536, 16384, 4096, 1024]) {
         const arrow = await fetchData(`utf8.${numRows}.arrow`);
         const table = Arrow.Table.from([arrow]);
 
         console.assert(table.chunks.length == 1, "table.chunks.length", table.chunks.length, "==", 1);
 
-        await filterGandiva(Benchmark, Arrow, Gandiva, table, numRows);
-        await filterArquero(Benchmark, Arrow, Arquero, table, numRows);
+        await filterGandiva(Benchmark, Arrow, Gandiva, arrow, numRows);
+        await filterArquero(Benchmark, Arrow, Arquero, arrow, numRows);
     }
 }
