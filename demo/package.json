@@ -1,0 +1,19 @@
+{
+    "name": "demo",
+    "version": "0.0.0",
+    "description": "",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "apache-arrow": "^6.0.0",
+        "gandiva-wasm": "file:..",
+        "react": "^17.0.2",
+        "react-dom": "^16.14.0"
+    },
+    "devDependencies": {
+        "parcel": "^2.0.0"
+    }
+}
