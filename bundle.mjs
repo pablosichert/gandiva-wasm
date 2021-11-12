@@ -24,7 +24,7 @@ mkdir.sync(dist);
 // Copy WASM files
 
 const mode = is_debug ? "debug" : 'release';
-const buildPath = path.resolve(__dirname, `arrow/cpp/build/${mode}`);
+const buildPath = path.resolve(__dirname, `arrow/cpp/build/${mode}/${mode}`);
 fs.copyFileSync(path.resolve(buildPath, 'gandiva_wasm.wasm'), path.resolve(dist, 'gandiva_wasm.wasm'));
 fs.copyFileSync(path.resolve(buildPath, 'gandiva_wasm.js'), path.resolve(dist, 'gandiva_wasm.js'));
 
