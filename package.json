@@ -34,7 +34,6 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/gandiva.node.js",
   "module": "./dist/gandiva.module.js",
   "browser": {
     "./dist/gandiva.node.js": "./dist/gandiva.browser.js"
