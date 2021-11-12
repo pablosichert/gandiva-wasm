@@ -28,7 +28,8 @@
     "build:debug": "node bundle.mjs debug",
     "build:release": "node bundle.mjs release",
     "test:node": "node --experimental-wasm-eh node_modules/.bin/jest",
-    "benchmark:browser": "npx karma start benchmarks/karma.conf.cjs"
+    "benchmark:browser": "npx karma start benchmarks/karma.conf.cjs",
+    "benchmark:node": "node --experimental-wasm-eh dist/gandiva.benchmark.node.js"
   },
   "files": [
     "dist"

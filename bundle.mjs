@@ -90,4 +90,17 @@ const EXTERNALS = ['fs', 'path'];
         sourcemap: is_debug ? 'inline' : true,
         external: EXTERNALS,
     });
+
+    console.log('[ESBUILD] gandiva.benchmark.node.js');
+    await esbuild.build({
+        entryPoints: ['./benchmarks/index.node.ts'],
+        outfile: 'dist/gandiva.benchmark.node.js',
+        platform: 'node',
+        format: 'cjs',
+        target: TARGET,
+        bundle: true,
+        minify: true,
+        sourcemap: true,
+        external: EXTERNALS,
+    });
 })();
